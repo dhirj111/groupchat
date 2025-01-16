@@ -10,4 +10,9 @@ const router = express.Router();
 router.get('/sign', chatcontroller.baserootsignup);
 router.post('/signup', chatcontroller.signup)
 
+
+router.get('/login', chatcontroller.baserootlogin);
+
+router.post('/login', chatcontroller.login)
+
 module.exports = router

@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const https = require('https')
+
 // app.use(cors());
 app.use(express.json()); // Built-in middleware for parsing JSON
 app.use(express.urlencoded({ extended: true })); // Built-in middleware for parsing URL-encoded data

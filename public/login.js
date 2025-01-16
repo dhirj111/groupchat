@@ -8,12 +8,12 @@ const handleformsubmit = (event) => {
   };
   // console.log(userDetails)
   axios
-    .post("https://localhost:5000/login", userDetails)
+    .post("http://localhost:3000/login", userDetails)
     .then((response) => {
       console.log("this is response of login.js file response", response)
       document.getElementById('note').textContent += response.data.message;
       if (response.data.urltoredirect) {
-        localStorage.setItem("user jwt",response.data.usertoken)
+        localStorage.setItem("user jwt", response.data.usertoken)
         window.location.href = response.data.urltoredirect;
         //it redirected because we provided urltoredirect as a reponse to /login password correct condition 
       }
