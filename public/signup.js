@@ -15,10 +15,12 @@ const handleformsubmit = (event) => {
     .post("http://localhost:3000/signup", userDetails)
     .then((response) => {
       console.log(response)
+      document.getElementById('note').textContent += response.data.message;
     })
     .catch((error) => {
-      console.error('Error details:', error.response ? error.response.data : error.message);
-      alert('Failed to create product');
+      console.log("error is ", error)
+      // console.error('Error details:', error.response ? error.response.data : error.message);
+      document.getElementById('note').textContent += error.response.data.message;
     });
   console.log(userDetails)
 
