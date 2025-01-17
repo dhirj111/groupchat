@@ -9,8 +9,19 @@ app.use(express.urlencoded({ extended: true })); // Built-in middleware for pars
 const sequelize = require('./util/database');
 const Chatuser = require('./models/chatuser');
 const adminRoutes = require('./routes/chat');
+const Messages = require('./models/messages');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(adminRoutes);
+
+
+
+Messages.belongsTo(Chatuser, { foreignKey: 'chatuserId' })
+
+Chatuser.hasMany(Messages, { foreignKey: 'chatuserId' })
+
+
+
+
 sequelize
   .sync()
   .then(() => {

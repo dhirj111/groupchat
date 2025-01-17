@@ -1,0 +1,137 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>message window</title>
+</head>
+
+<body>
+  <form id="messageForm" onsubmit="handleFormSubmit(event)">
+    <label for="description">message:</label>
+    <input type="text" name="description" id="usermessage" />
+    <button type="submit">send</button>
+  </form>
+</body>
+
+</html>
+
+Group Chat Interface
+Preview
+Code
+
+<!DOCTYPE html>
+<html> -->
+
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+    }
+
+    .chat-header {
+      background-color: white;
+      color: black;
+      padding: 10px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .chat-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      background-color: white;
+    }
+
+    .message {
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .message:nth-child(even) {
+      background-color: #e6e6e6;
+    }
+
+    .input-container {
+      display: flex;
+      padding: 10px;
+      background-color: #1a4666;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Style the form to match the design */
+    #messageForm {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+    }
+
+    #usermessage {
+      flex-grow: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 2px;
+    }
+
+    button[type="submit"] {
+      padding: 8px 20px;
+      background-color: white;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    /* Hide the label visually but keep it accessible */
+    label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-header">
+    Chat App
+  </div>
+
+  <div id="chats" class="chat-container">
+    <div class="message">You joined</div>
+    <div class="message">Vaibhav joined</div>
+    <div class="message">Vaibhav: hello</div>
+    <div class="message">You: hi There</div>
+    <div class="message">Vaibhav: What is up?</div>
+    <div class="message">Vaibhav: All good</div>
+  </div>
+
+  <div class="input-container">
+    <form id="messageForm" onsubmit="handleFormSubmit(event)">
+      <label for="usermessage">message:</label>
+      <input type="text" name="description" id="usermessage" placeholder="Type a message..." />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="chatwindow.js"></script>
+</body>
+
+</html>

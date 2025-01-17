@@ -15,4 +15,7 @@ router.get('/login', chatcontroller.baserootlogin);
 
 router.post('/login', chatcontroller.login)
 
+router.get('/chatwindow', chatcontroller.chatwindow)
+
+router.post('/messagesubmit', chatcontroller.messagessubmit)
 module.exports = router

@@ -2,6 +2,7 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../util/database');
 const Chatuser = require('../models/chatuser');
+const Messages = require('../models/messages')
 const router = require('../routes/chat');
 const { route } = require('../routes/chat');
 const path = require('path');
@@ -17,7 +18,10 @@ exports.baserootsignup = (req, res, next) => {
   console.log("Serving htmlmain.html");
   res.sendFile(path.join(__dirname, '..', 'public', 'signup.html'));
 }
-
+exports.chatwindow = (req, res, next) => {
+  console.log("Serving htmlmain.html");
+  res.sendFile(path.join(__dirname, '..', 'public', 'chatwindow.html'));
+}
 
 exports.signup = async (req, res, next) => {
   const t = await sequelize.transaction();
@@ -72,6 +76,7 @@ exports.baserootlogin = (req, res, next) => {
 }
 
 
+
 exports.login = async (req, res, next) => {
   console.log(req.body)
   try {
@@ -106,8 +111,6 @@ exports.login = async (req, res, next) => {
     }
   }
   catch (err) {
-    //this block is for eror in exceution of try blocks as a 
-    // whole, catch does not care about individual error of logic
     console.log("inside catch  block of controller err is ==", err);
     res.status(500).json({
       error: " user does not exist",
@@ -115,3 +118,57 @@ exports.login = async (req, res, next) => {
     });
   }
 }
+
+exports.messagessubmit = async (req, res, next) => {
+  const t = await sequelize.transaction();
+
+  try {
+    // console.log("Received data at /appointmentData");
+    // console.log("user attached with req of middleware", req.user.id, " ", req.body.user);
+
+    const msg = req.body.msg;
+    console.log("   msg        ", msg)
+
+    //send msg to db
+
+
+    // Get current user with totalsum
+    // const user = await Expenseuser.findByPk(req.user.id, { transaction: t });
+
+    // if (!user) {
+    //   await t.rollback();
+    //   return res.status(404).json({
+    //     error: 'User not found'
+    //   });
+    // }
+
+    // Create new expense within transaction
+    const newMessage = await Messages.create({
+      msg: msg,
+      chatuserId: 1
+
+    }, { transaction: t });
+
+    // Commit transaction
+    await t.commit();
+
+    // Send success response
+    return res.status(201).json({
+      message: "message recorded successfully",
+      // expense: newExpense,
+      // currentBalance: newTotal
+    });
+
+  } catch (err) {
+    // Rollback transaction on error
+    await t.rollback();
+
+    console.error('Error creating msg:', err);
+
+    // Send appropriate error response
+    return res.status(500).json({
+      error: "Failed to record expense",
+      details: 'Internal server error'
+    });
+  }
+};
