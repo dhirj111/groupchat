@@ -2,15 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let msgform = document.getElementById("messageForm");
 
-
-
-
-
-
-
-
-
-
   const fetchData = () => {
     axios.get("http://localhost:3000/messages", {
       headers: {
@@ -25,28 +16,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Iterate through all products and create list items
         response.data.messages.forEach((product) => {
-          console.log("product is   ", product)
           let chatcontainer = document.getElementById("chats");
-          console.log(chatcontainer);
-
           let msgdiv = document.createElement('div');
           msgdiv.className = 'message'; // Add a class for consistent styling
           msgdiv.textContent = `${product.name}:  ${product.msg}`; // Use textContent for plain text to avoid potential XSS attacks
-          console.log(msgdiv);
           chatcontainer.appendChild(msgdiv); // Append the new message
         });
       });
 
   };
-  fetchData()
-
-
-
-
-
-
-
-
+  setInterval(() => fetchData(), 1000);
 
 
 
@@ -60,20 +39,20 @@ document.addEventListener("DOMContentLoaded", () => {
       .post("http://localhost:3000/messagesubmit", { msg: msg }, { headers: { token: localStorage.getItem("user jwt") } })
       .then((response) => {
         console.log('message recorded successfully!');
-        console.log('Message recorded successfully!');
+        // console.log('Message recorded successfully!');
 
-        let chatcontainer = document.getElementById("chats");
-        console.log(chatcontainer);
+        // let chatcontainer = document.getElementById("chats");
+        // console.log(chatcontainer);
 
-        let msgdiv = document.createElement('div');
-        msgdiv.className = 'message'; // Add a class for consistent styling
-        msgdiv.textContent = `${response.data.name}:  ${msg}`; // Use textContent for plain text to avoid potential XSS attacks
-        console.log(msgdiv);
+        // let msgdiv = document.createElement('div');
+        // msgdiv.className = 'message'; // Add a class for consistent styling
+        // msgdiv.textContent = `${response.data.name}:  ${msg}`; // Use textContent for plain text to avoid potential XSS attacks
+        // console.log(msgdiv);
 
-        chatcontainer.appendChild(msgdiv); // Append the new message
+        // chatcontainer.appendChild(msgdiv); // Append the new message
 
-        // fetchData(); // Refresh the list
-        // isLeaderboardLoaded = false;
+        ; // Refresh the list
+
         // form.reset(); // Clear the form
       })
       .catch((error) => {
