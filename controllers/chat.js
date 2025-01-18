@@ -9,9 +9,9 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 const jwt = require('jsonwebtoken')
-function generateAccessToken(id, isPremiumUser) {
+function generateAccessToken(id, name) {
 
-  return jwt.sign({ userId: id }, process.env.SECRET_KEY);
+  return jwt.sign({ userId: id, name: name }, process.env.TOKEN_SECRET);
 }
 //main signup page
 exports.baserootsignup = (req, res, next) => {
@@ -90,10 +90,10 @@ exports.login = async (req, res, next) => {
 
         if (result) {
           return res.status(201).json({
-            usertoken: generateAccessToken(existingUser.id, existingUser.isPremiumUser),
+            usertoken: generateAccessToken(existingUser.id, existingUser.name),
             code: "userverified",
             message: "user logged in succesfully",
-            urltoredirect: 'https://localhost:3000/logged'
+            urltoredirect: 'http://localhost:3000/chatwindow'
           });
         }
         else {
@@ -125,7 +125,7 @@ exports.messagessubmit = async (req, res, next) => {
   try {
     // console.log("Received data at /appointmentData");
     // console.log("user attached with req of middleware", req.user.id, " ", req.body.user);
-
+    console.log("user attached with req of middleware", req.user.id);
     const msg = req.body.msg;
     console.log("   msg        ", msg)
 
@@ -143,9 +143,10 @@ exports.messagessubmit = async (req, res, next) => {
     // }
 
     // Create new expense within transaction
-    const newMessage = await Messages.create({
+    await Messages.create({
       msg: msg,
-      chatuserId: 1
+      name: req.user.name,
+      chatuserId: req.user.id
 
     }, { transaction: t });
 
@@ -154,6 +155,7 @@ exports.messagessubmit = async (req, res, next) => {
 
     // Send success response
     return res.status(201).json({
+      name: req.user.name,
       message: "message recorded successfully",
       // expense: newExpense,
       // currentBalance: newTotal
@@ -172,3 +174,18 @@ exports.messagessubmit = async (req, res, next) => {
     });
   }
 };
+
+
+
+exports.fetchmessages = async (req, res, next) => {
+
+  Messages.findAll().then(messages => {
+    console.log(messages)
+res.json({
+  messages: messages,
+})
+
+  })
+
+
+}

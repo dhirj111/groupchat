@@ -3,7 +3,7 @@ const path = require('path');
 const express = require('express');
 
 const chatcontroller = require('../controllers/chat');
-
+const auth = require('../middleware/auth');
 const router = express.Router();
 
 //main signup page
@@ -17,5 +17,8 @@ router.post('/login', chatcontroller.login)
 
 router.get('/chatwindow', chatcontroller.chatwindow)
 
-router.post('/messagesubmit', chatcontroller.messagessubmit)
+router.post('/messagesubmit', auth, chatcontroller.messagessubmit)
+
+router.get('/messages', auth, chatcontroller.fetchmessages)
+
 module.exports = router

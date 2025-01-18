@@ -1,7 +1,53 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-
   let msgform = document.getElementById("messageForm");
+
+
+
+
+
+
+
+
+
+
+  const fetchData = () => {
+    axios.get("http://localhost:3000/messages", {
+      headers: {
+        token: localStorage.getItem("user jwt")
+      }
+    })
+      .then((response) => {
+
+        console.log(response.data)
+        // Clear existing list
+        document.getElementById("chats").innerHTML = "";
+
+        // Iterate through all products and create list items
+        response.data.messages.forEach((product) => {
+          console.log("product is   ", product)
+          let chatcontainer = document.getElementById("chats");
+          console.log(chatcontainer);
+
+          let msgdiv = document.createElement('div');
+          msgdiv.className = 'message'; // Add a class for consistent styling
+          msgdiv.textContent = `${product.name}:  ${product.msg}`; // Use textContent for plain text to avoid potential XSS attacks
+          console.log(msgdiv);
+          chatcontainer.appendChild(msgdiv); // Append the new message
+        });
+      });
+
+  };
+  fetchData()
+
+
+
+
+
+
+
+
+
 
 
   const defaultFormSubmit = (event) => {
@@ -14,16 +60,21 @@ document.addEventListener("DOMContentLoaded", () => {
       .post("http://localhost:3000/messagesubmit", { msg: msg }, { headers: { token: localStorage.getItem("user jwt") } })
       .then((response) => {
         console.log('message recorded successfully!');
-        let chatcontainer = document.getElementById("chats");
-        console.log(chatcontainer)
-        let msgdiv = document.createElement('div');
-        msgdiv.innerHTML = `${msg}`;
-        console.log(msgdiv)
-        chatcontainer.appendchild(msgdiv)
+        console.log('Message recorded successfully!');
 
-        //fetchData(); // Refresh the list
-        //isLeaderboardLoaded = false;
-        //form.reset(); // Clear the form
+        let chatcontainer = document.getElementById("chats");
+        console.log(chatcontainer);
+
+        let msgdiv = document.createElement('div');
+        msgdiv.className = 'message'; // Add a class for consistent styling
+        msgdiv.textContent = `${response.data.name}:  ${msg}`; // Use textContent for plain text to avoid potential XSS attacks
+        console.log(msgdiv);
+
+        chatcontainer.appendChild(msgdiv); // Append the new message
+
+        // fetchData(); // Refresh the list
+        // isLeaderboardLoaded = false;
+        // form.reset(); // Clear the form
       })
       .catch((error) => {
         console.error('Error details:', error.response ? error.response.data : error.message);
