@@ -1,6 +1,8 @@
 
 const Sequelize = require('sequelize');
 const sequelize = require('../util/database');
+const { Op } = require("sequelize");
+
 const Chatuser = require('../models/chatuser');
 const Messages = require('../models/messages')
 const router = require('../routes/chat');
@@ -8,7 +10,8 @@ const { route } = require('../routes/chat');
 const path = require('path');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { measureMemory } = require('vm');
 function generateAccessToken(id, name) {
 
   return jwt.sign({ userId: id, name: name }, process.env.TOKEN_SECRET);
@@ -176,16 +179,25 @@ exports.messagessubmit = async (req, res, next) => {
 };
 
 
-
-exports.fetchmessages = async (req, res, next) => {
-
-  Messages.findAll().then(messages => {
+exports.fetchmessages = async (req, res, next) => {   
+  let lastid = req.params.id;
+  console.log(lastid, "last id here ")
+  await Messages.findAll({
+    where: {
+      id: {
+        [Op.gt]: lastid, // Condition: id > 0
+      },
+    },
+  }).then(messages => {
+console.log(messages)
+    let change = true;
+    if(messages.length==0){
+      change= false;
+    }
     console.log(messages)
-res.json({
-  messages: messages,
-})
-
+    res.json({
+      messages: messages,
+      change:change
+    })
   })
-
-
 }

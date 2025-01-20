@@ -19,6 +19,6 @@ router.get('/chatwindow', chatcontroller.chatwindow)
 
 router.post('/messagesubmit', auth, chatcontroller.messagessubmit)
 
-router.get('/messages', auth, chatcontroller.fetchmessages)
+router.get('/messages/:id', auth, chatcontroller.fetchmessages)
 
 module.exports = router
