@@ -15,6 +15,10 @@ const Messages = sequelize.define('messages', {
   msg: {
     type: Sequelize.STRING,  // Matches table definition
     allowNull: true  // Since `expense` is defined as NULL in table
+  },
+  groupId: {
+    type: Sequelize.STRING,
+    allowNull: false
   }
 }
 );

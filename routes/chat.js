@@ -21,4 +21,13 @@ router.post('/messagesubmit', auth, chatcontroller.messagessubmit)
 
 router.get('/messages/:id', auth, chatcontroller.fetchmessages)
 
+router.post('/creategroup', auth, chatcontroller.creategroup)
+
+
+router.get('/fetchgroups', chatcontroller.fetchgroups)
+
+router.post('/joinstatus', auth, chatcontroller.joinstatus)
+
+
+router.post('/joinbutton', auth, chatcontroller.joinbutton)
 module.exports = router

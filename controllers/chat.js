@@ -5,13 +5,18 @@ const { Op } = require("sequelize");
 
 const Chatuser = require('../models/chatuser');
 const Messages = require('../models/messages')
+const Groups = require('../models/groups')
 const router = require('../routes/chat');
+const UserGroup = require('../models/usergroup')
+console.log("U s e r G r o u p  ", UserGroup)
 const { route } = require('../routes/chat');
 const path = require('path');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { measureMemory } = require('vm');
+const { group } = require('console');
+
+
 function generateAccessToken(id, name) {
 
   return jwt.sign({ userId: id, name: name }, process.env.TOKEN_SECRET);
@@ -130,26 +135,13 @@ exports.messagessubmit = async (req, res, next) => {
     // console.log("user attached with req of middleware", req.user.id, " ", req.body.user);
     console.log("user attached with req of middleware", req.user.id);
     const msg = req.body.msg;
-    console.log("   msg        ", msg)
-
-    //send msg to db
-
-
-    // Get current user with totalsum
-    // const user = await Expenseuser.findByPk(req.user.id, { transaction: t });
-
-    // if (!user) {
-    //   await t.rollback();
-    //   return res.status(404).json({
-    //     error: 'User not found'
-    //   });
-    // }
-
-    // Create new expense within transaction
+    const group = req.body.groupId
+    console.log("   msg     group 56666 5665 5   ", msg, group)
     await Messages.create({
       msg: msg,
       name: req.user.name,
-      chatuserId: req.user.id
+      chatuserId: req.user.id,
+      groupId:group
 
     }, { transaction: t });
 
@@ -179,25 +171,127 @@ exports.messagessubmit = async (req, res, next) => {
 };
 
 
-exports.fetchmessages = async (req, res, next) => {   
+exports.fetchmessages = async (req, res, next) => {
   let lastid = req.params.id;
+
+  const groupId = req.header('groupId');
+
   console.log(lastid, "last id here ")
   await Messages.findAll({
     where: {
       id: {
         [Op.gt]: lastid, // Condition: id > 0
       },
+      groupId: groupId
     },
   }).then(messages => {
-console.log(messages)
     let change = true;
-    if(messages.length==0){
-      change= false;
+    if (messages.length == 0) {
+      change = false;
     }
     console.log(messages)
     res.json({
       messages: messages,
-      change:change
+      change: change
     })
   })
+}
+
+exports.creategroup = async (req, res, next) => {
+  console.log("hitted creategroup")
+  console.log(req.body.groupname);
+  console.log("user attached with req of middleware", req.user.id);
+  const t = await sequelize.transaction();
+  try {
+
+    const newGroup = await Groups.create({
+      name: req.body.groupname,
+      creator: req.user.id,
+
+
+    }, { transaction: t });
+
+    await newGroup.addChatuser(req.user.id, { transaction: t });
+    // Commit transaction
+    await t.commit();
+
+    // Send success response
+    return res.status(201).json({
+      message: "group created successfully",
+
+    });
+
+  } catch (err) {
+    // Rollback transaction on error
+    await t.rollback();
+
+    console.error('Error creating msg:', err);
+
+    // Send appropriate error response
+    return res.status(500).json({
+      error: "Failed to record expense",
+      details: 'Internal server error'
+    });
+  }
+};
+
+exports.fetchgroups = async (req, res) => {
+
+  Groups.findAll().then((groups) => {
+
+    res.status(201).json({
+      groups: groups
+    });
+
+
+  })
+
+
+}
+
+exports.joinstatus = async (req, res) => {
+  console.log("000222"); // This should print to confirm the route is being hit
+  console.log(" join      status         consoles        1020 ", req.body.groupId, req.user.id)
+  const groupId = req.body.groupId; // Assuming you pass these in the request body
+  const userId = req.user.id
+
+  try {
+    let ismember = true
+    const usergroup = await UserGroup.findOne({
+      where: {
+        chatuserId: userId,
+        groupId: groupId
+      }
+    })
+    if (!usergroup) {
+
+      ismember = false
+    }
+    res.status(201).json({
+      groupdetails: ismember
+    });
+
+  } catch (error) {
+    console.error("Error checking user group membership:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+exports.joinbutton = async (req, res) => {
+  try {
+    const groupId = req.body.groupId; // Assuming you pass these in the request body
+    const userId = req.user.id
+    await UserGroup.create({
+      chatuserId: userId,
+      groupId: groupId
+
+
+    });
+    res.status(201).json({
+      groupdetails: "user is added to group"
+    });
+  } catch (error) {
+    console.error("Error checking user group membership:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
 }

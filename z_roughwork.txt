@@ -1,0 +1,8 @@
+
+user table
+
+messages table
+
+User.belongsToMany(Group, { through: UserGroup }); // Many-to-Many from Users to Groups
+
+Group.belongsToMany(User, { through: UserGroup }); // Many-to-Many from Groups to Users

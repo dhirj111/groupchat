@@ -1,63 +1,190 @@
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
+  const inputContainer = document.querySelector('.input-container');
+  if (inputContainer) {
+    inputContainer.style.display = 'none'; // Hide the element
+  }
+  let groupname;
+
+  // fetchData()
+
 
   let msgform = document.getElementById("messageForm");
-
+  let chatcontainer = document.getElementById("chats");
+  let ismemberofgroup = false
   // console.log("chats arr ", chatsarr);
-
+  let groupid = false
   // console.log(lastid)
   let lastid = 0;
   console.log(lastid)
   const fetchData = () => {
-    console.log(lastid)
-    axios.get(`http://localhost:3000/messages/${lastid}`, {
-      headers: {
-        token: localStorage.getItem("user jwt")
+
+    console.log("         d      ", groupid)
+    if (ismemberofgroup) {
+      if (inputContainer.style.display = 'none') {
+        inputContainer.style.display = 'flex'; // Restore its display style
+
       }
-    })
+      console.log(lastid)
+      axios.get(`http://localhost:3000/messages/${lastid}`, {
+        headers: {
+          token: localStorage.getItem("user jwt"),
+          groupId: groupid
+        }
+      })
+        .then((response) => {
+
+          let chats = localStorage.getItem('chats')
+          if (chats == null) {
+            localStorage.setItem('chats', '[]')
+            chats = localStorage.getItem('chats')
+          }
+          const chatsarr = JSON.parse(chats);
+          if (chatsarr.length != 0) {
+            lastid = chatsarr[chatsarr.length - 1].id
+          }
+          console.log(response.data.change)
+          if (response.data.change) {
+            const mergedArray = chatsarr.concat(response.data.messages);
+            // Convert merged array to a string
+            const resultString = JSON.stringify(mergedArray);
+            localStorage.setItem('chats', resultString)
+            response.data.messages.forEach((product) => {
+              let msgdiv = document.createElement('div');
+              msgdiv.className = 'message'; // Add a class for consistent styling
+              msgdiv.textContent = `${product.name}:  ${product.msg}`; // Use textContent for plain text to avoid potential XSS attacks
+              chatcontainer.appendChild(msgdiv); // Append the new message
+            });
+          }
+        });
+
+
+    }
+    else {
+      console.log("in without membership");
+      chatcontainer.innerHTML = "";
+      console.log(document.getElementById("joindiv"));
+
+      if (document.getElementById("joindiv")) {
+        document.getElementById("joindiv").remove();
+      }
+
+      // Create the div element
+      const groupDiv = document.createElement("div");
+      groupDiv.id = "joindiv";
+      groupDiv.setAttribute("data-group-id", `${groupid}`);
+      groupDiv.textContent = `Group ID: ${groupid}`;
+
+
+
+      // Create join button
+      const joinButton = document.createElement("button");
+      joinButton.textContent = "Join";
+
+      // Add click event with Axios POST request
+      joinButton.onclick = async () => {
+
+        const groupId = groupDiv.getAttribute("data-group-id");
+        axios.post("http://localhost:3000/joinbutton", {
+          groupId: groupId,
+        }, { headers: { token: localStorage.getItem("user jwt") } }).then((response) => {
+          inputContainer.style.display = 'flex'; // Restore its display style
+          console.log(response.data, " from join button")
+        }
+        )
+      }
+
+      // Append button to div
+      groupDiv.appendChild(joinButton);
+      console.log("last append", groupDiv);
+
+      // Append div to body
+      document.body.appendChild(groupDiv);
+    }
+  }
+
+
+
+  let newgroup1 = document.getElementById("newgroupform1");
+  console.log(newgroup1)
+
+  const newgroupform = (event) => {
+    event.preventDefault();
+    console.log(" ok ")
+    console.log(event.target.groupname.value)
+
+
+    axios
+      .post("http://localhost:3000/creategroup", { groupname: event.target.groupname.value }, { headers: { token: localStorage.getItem("user jwt") } })
       .then((response) => {
-        console.log(response.data.message)
-
-        let chats = localStorage.getItem('chats')
-        if (chats == null) {
-          localStorage.setItem('chats', '[]')
-          chats = localStorage.getItem('chats')
-        }
-        const chatsarr = JSON.parse(chats);
-        if (chatsarr.length != 0) {
-          lastid = chatsarr[chatsarr.length - 1].id
-        }
-        console.log(response.data.change)
-        if (response.data.change) {
-          const mergedArray = chatsarr.concat(response.data.messages);
-          // Convert merged array to a string
-          const resultString = JSON.stringify(mergedArray);
-          localStorage.setItem('chats', resultString)
-          response.data.messages.forEach((product) => {
-            let chatcontainer = document.getElementById("chats");
-            let msgdiv = document.createElement('div');
-            msgdiv.className = 'message'; // Add a class for consistent styling
-            msgdiv.textContent = `${product.name}:  ${product.msg}`; // Use textContent for plain text to avoid potential XSS attacks
-            chatcontainer.appendChild(msgdiv); // Append the new message
-          });
-        }
-
-        // console.log(response.data)
-        // // Clear existing list
-        // document.getElementById("chats").innerHTML = "";
-        // // Iterate through all products and create list items
-        // response.data.messages.forEach((product) => {
-        //   let chatcontainer = document.getElementById("chats");
-        //   let msgdiv = document.createElement('div');
-        //   msgdiv.className = 'message'; // Add a class for consistent styling
-        //   msgdiv.textContent = `${product.name}:  ${product.msg}`; // Use textContent for plain text to avoid potential XSS attacks
-        //   chatcontainer.appendChild(msgdiv); // Append the new message
-        // });
+        console.log('message recorded successfully!');
+      })
+      .catch((error) => {
+        console.error('Error details:', error.response ? error.response.data : error.message);
+        alert('Failed to create product');
       });
 
-  };
 
-  // fetchData()
-  setInterval(() => fetchData(), 2000);
+  }
+  newgroup1.addEventListener("submit", newgroupform)
+
+  let publicgroups = document.getElementById("publicgroups")
+  console.log("hi  ,", publicgroups)
+  const fetchgroups = () => {
+    axios.get('http://localhost:3000/fetchgroups')
+      .then((response) => {
+        response.data.groups.forEach(group => {
+          let groupli = document.createElement("li");
+          groupname = group.name
+          console.log(group.name)
+          groupli.textContent = group.name; // Use textContent for plain text
+
+
+          groupli.addEventListener("click", () => {
+            groupid = false
+            axios
+              .post("http://localhost:3000/joinstatus", { groupId: group.id }, { headers: { token: localStorage.getItem("user jwt") } })
+              .then((response) => {
+                groupid = group.id
+                console.log(response)
+                console.log("setted group id as", group.id)
+                if (response.data.groupdetails) {
+                  console.log("was true")
+                  ismemberofgroup = true
+                }
+
+
+                fetchData()
+
+
+
+
+
+
+              })
+              .catch((error) => {
+                console.error("Error joining group:", error);
+              });
+          });
+
+
+
+
+          publicgroups.appendChild(groupli);
+        });
+
+
+
+
+      }
+      )
+  }
+  fetchgroups()
+  // setInterval(() => fetchData(), 2000);
+
+
 
   const defaultFormSubmit = (event) => {
     event.preventDefault();
@@ -66,24 +193,10 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log(msg)
 
     axios
-      .post("http://localhost:3000/messagesubmit", { msg: msg }, { headers: { token: localStorage.getItem("user jwt") } })
+      .post("http://localhost:3000/messagesubmit", { msg: msg, groupId: groupid }, { headers: { token: localStorage.getItem("user jwt") } })
       .then((response) => {
         console.log('message recorded successfully!');
-        // console.log('Message recorded successfully!');
 
-        // let chatcontainer = document.getElementById("chats");
-        // console.log(chatcontainer);
-
-        // let msgdiv = document.createElement('div');
-        // msgdiv.className = 'message'; // Add a class for consistent styling
-        // msgdiv.textContent = `${response.data.name}:  ${msg}`; // Use textContent for plain text to avoid potential XSS attacks
-        // console.log(msgdiv);
-
-        // chatcontainer.appendChild(msgdiv); // Append the new message
-
-        ; // Refresh the list
-
-        // form.reset(); // Clear the form
       })
       .catch((error) => {
         console.error('Error details:', error.response ? error.response.data : error.message);
@@ -95,6 +208,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Set the default form submit handler
   msgform.addEventListener("submit", defaultFormSubmit);
+
+
+
+
+
 
 
 })
