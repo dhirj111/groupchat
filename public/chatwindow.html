@@ -112,15 +112,18 @@
     /* Added styles for groupDiv */
     #joindiv {
       position: absolute;
-      bottom: 80px; /* Place it above the input-container */
+      bottom: 80px;
+      /* Place it above the input-container */
       left: 10px;
-      width: 30%; /* Make the div cover 30% of the screen width */
+      width: 30%;
+      /* Make the div cover 30% of the screen width */
       padding: 10px;
       border: 1px solid black;
       background-color: #f0f0f0;
       border-radius: 5px;
       z-index: 1000;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add subtle shadow for better visibility */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      /* Add subtle shadow for better visibility */
     }
   </style>
 </head>
@@ -140,7 +143,9 @@
       <button type="submit">Create</button>
     </form>
   </div>
+  <h2 id="currentgroupname">.</h2>
   <div id="chats" class="chat-container">
+
     <div class="message">You joined</div>
     <div class="message">Vaibhav joined</div>
     <div class="message">Vaibhav: hello</div>
@@ -153,6 +158,7 @@
       <button type="submit">Send</button>
     </form>
   </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>
   <script src="chatwindow.js"></script>
 </body>

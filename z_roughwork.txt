@@ -1,8 +1,8 @@
+Superpowers of the Admin
 
-user table
-
-messages table
-
-User.belongsToMany(Group, { through: UserGroup }); // Many-to-Many from Users to Groups
-
-Group.belongsToMany(User, { through: UserGroup }); // Many-to-Many from Groups to Users
+Like Whatsapp , the person who creates the group becomes the admin of the group .
+He/she can make other users join the group just like in whatsapp by searching the name, emailID or phone number
+He/she can make other members of the group the admin of the group.
+He/she can also remove users from the group
+One User can form multiple groups.
+Just think of it like whatsapp groups.

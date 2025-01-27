@@ -8,8 +8,8 @@ const router = express.Router();
 
 //main signup page
 router.get('/sign', chatcontroller.baserootsignup);
-router.post('/signup', chatcontroller.signup)
 
+router.post('/signup', chatcontroller.signup)
 
 router.get('/login', chatcontroller.baserootlogin);
 
@@ -23,11 +23,18 @@ router.get('/messages/:id', auth, chatcontroller.fetchmessages)
 
 router.post('/creategroup', auth, chatcontroller.creategroup)
 
-
 router.get('/fetchgroups', chatcontroller.fetchgroups)
 
 router.post('/joinstatus', auth, chatcontroller.joinstatus)
 
-
 router.post('/joinbutton', auth, chatcontroller.joinbutton)
+
+router.post('/admin-settings', auth, chatcontroller.adminsettings)
+
+router.get('/group-members/:groupId', auth, chatcontroller.loadGroupMembers);
+router.post('/remove-group-member', auth, chatcontroller.removeMember);
+router.post('/make-group-admin', auth, chatcontroller.makeMemberAdmin);
+
+router.post('/add-group-member', auth, chatcontroller.addGroupMember);
+
 module.exports = router

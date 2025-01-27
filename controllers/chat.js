@@ -141,7 +141,7 @@ exports.messagessubmit = async (req, res, next) => {
       msg: msg,
       name: req.user.name,
       chatuserId: req.user.id,
-      groupId:group
+      groupId: group
 
     }, { transaction: t });
 
@@ -204,14 +204,20 @@ exports.creategroup = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
 
-    const newGroup = await Groups.create({
+    const newgroup = await Groups.create({
       name: req.body.groupname,
       creator: req.user.id,
 
+    }, { transaction: t });
+
+    console.log(newgroup.id, "is new group created rn")
+    await UserGroup.create({
+      chatuserId: req.user.id,
+      groupId: newgroup.id,
+      isadmin: true,
 
     }, { transaction: t });
 
-    await newGroup.addChatuser(req.user.id, { transaction: t });
     // Commit transaction
     await t.commit();
 
@@ -283,7 +289,8 @@ exports.joinbutton = async (req, res) => {
     const userId = req.user.id
     await UserGroup.create({
       chatuserId: userId,
-      groupId: groupId
+      groupId: groupId,
+      isadmin: false
 
 
     });
@@ -295,3 +302,247 @@ exports.joinbutton = async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 }
+
+
+exports.adminsettings = async (req, res, next) => {
+  const chatuserId = req.user.id;
+  const groupId = req.body.groupid
+
+  try {
+    // Extract chatuserId and groupId from the request body
+
+    // Validate input
+    // if (!chatuserId || !groupId) {
+    //   return res.status(400).json({ message: 'Invalid request. Missing chatuserId or groupId.' });
+    // }
+
+    // Fetch the user group relationship
+    const userGroup = await UserGroup.findOne({
+      where: { chatuserId, groupId },
+    });
+
+    // Check if the user exists in the group
+    // if (!userGroup) {
+    //   return res.status(404).json({ message: 'User not found in the specified group.' });
+    // }
+
+    // Check if the user is an admin
+    if (userGroup.isadmin) {
+      // Send adminaccess.html if the user is an admin
+
+      res.status(201).json({
+        groupid: groupId
+      });
+
+    } else {
+      // Respond with a message if the user is not an admin
+      return res.status(403).json({ message: 'You are not an admin.' });
+    }
+  } catch (error) {
+    console.error('Error in adminsettings:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+
+exports.loadGroupMembers = async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    const currentUserId = req.user.id;
+
+    // Check if current user is in the group
+    const currentUserGroupRole = await UserGroup.findOne({
+      where: { groupId: groupId, chatuserId: currentUserId }
+    });
+    console.log(currentUserGroupRole, "   is      currentUserGroupRole")
+    if (!currentUserGroupRole) {
+      return res.status(403).json({ message: 'You are not a member of this group' });
+    }
+
+    // Find all users in the group
+    const groupMembers = await UserGroup.findAll({
+      where: { groupId: groupId },
+      include: [{
+        model: Chatuser,
+        attributes: ['id', 'name']
+      }]
+    });
+    console.log(groupMembers, "are groupMembers")
+    const membersDetail = groupMembers.map(member => ({
+      id: member.chatuserId,
+      name: member.chatuser.name
+    }));
+    console.log(membersDetail, "are groupMembers  22 ")
+    res.status(200).json({ members: membersDetail });
+  } catch (error) {
+    console.error('Error loading group members:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+
+
+
+exports.removeMember = async (req, res) => {
+  console.log("reached remove member admin  ctrl")
+  try {
+    const { groupId, memberId } = req.body;
+    const currentUserId = req.user.id;
+
+    // Check if current user is admin
+    const currentUserGroupRole = await UserGroup.findOne({
+      where: {
+        groupId: groupId,
+        chatuserId: currentUserId,
+        isadmin: true
+      }
+    });
+
+    if (!currentUserGroupRole) {
+      return res.status(403).json({
+        message: 'Only group admins can remove members'
+      });
+    }
+
+    // Remove member from group
+    const removedMember = await UserGroup.destroy({
+      where: {
+        groupId: groupId,
+        chatuserId: memberId
+      }
+    });
+
+    if (removedMember === 0) {
+      return res.status(404).json({
+        message: 'Member not found in group'
+      });
+    }
+
+    res.status(200).json({
+      message: 'Member removed successfully'
+    });
+  } catch (error) {
+    console.error('Error removing group member:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+
+
+exports.makeMemberAdmin = async (req, res) => {
+  console.log("reached make member admin  ctrl")
+  try {
+    const { groupId, memberId } = req.body;
+    const currentUserId = req.user.id;
+
+    // Check if current user is admin
+    const currentUserGroupRole = await UserGroup.findOne({
+      where: {
+        groupId: groupId,
+        chatuserId: currentUserId,
+        isadmin: true
+      }
+    });
+
+    if (!currentUserGroupRole) {
+      return res.status(403).json({
+        message: 'Only group admins can promote members'
+      });
+    }
+
+    // Update member's admin status
+    const [updatedRows] = await UserGroup.update(
+      { isadmin: true },
+      {
+        where: {
+          groupId: groupId,
+          chatuserId: memberId
+        }
+      }
+    );
+
+    if (updatedRows === 0) {
+      return res.status(404).json({
+        message: 'Member not found in group'
+      });
+    }
+
+    res.status(200).json({
+      message: 'Member promoted to admin successfully'
+    });
+  } catch (error) {
+    console.error('Error making member admin:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.addGroupMember = async (req, res) => {
+  try {
+    const { email, groupId } = req.body;
+    const currentUserId = req.user.id;
+
+    // Check if current user is admin of the group
+    const currentUserGroupRole = await UserGroup.findOne({
+      where: { 
+        groupId: groupId, 
+        chatuserId: currentUserId,
+        isadmin: true
+      }
+    });
+
+    if (!currentUserGroupRole) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Only admins can add members' 
+      });
+    }
+
+    // Find user by email
+    const userToAdd = await Chatuser.findOne({
+      where: { email: email }
+    });
+
+    if (!userToAdd) {
+      return res.status(404).json({
+        success: false,
+        message: 'User with this email not found'
+      });
+    }
+
+    // Check if user is already in group
+    const existingMember = await UserGroup.findOne({
+      where: {
+        groupId: groupId,
+        chatuserId: userToAdd.id
+      }
+    });
+
+    if (existingMember) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is already a member of this group'
+      });
+    }
+
+    // Add user to group
+    await UserGroup.create({
+      chatuserId: userToAdd.id,
+      groupId: groupId,
+      isadmin: false // New members are not admins by default
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Member added successfully'
+    });
+
+  } catch (error) {
+    console.error('Error adding group member:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};

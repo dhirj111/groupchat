@@ -1,16 +1,13 @@
-
-
-
 document.addEventListener("DOMContentLoaded", () => {
   const inputContainer = document.querySelector('.input-container');
+
+  let h2e = document.getElementById("currentgroupname")
+  console.log(h2e, "hehe")
   if (inputContainer) {
     inputContainer.style.display = 'none'; // Hide the element
   }
   let groupname;
-
   // fetchData()
-
-
   let msgform = document.getElementById("messageForm");
   let chatcontainer = document.getElementById("chats");
   let ismemberofgroup = false
@@ -19,6 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // console.log(lastid)
   let lastid = 0;
   console.log(lastid)
+
+
   const fetchData = () => {
 
     console.log("         d      ", groupid)
@@ -27,7 +26,45 @@ document.addEventListener("DOMContentLoaded", () => {
         inputContainer.style.display = 'flex'; // Restore its display style
 
       }
-      console.log(lastid)
+      h2e.textContent = groupname;
+
+
+
+      const adminSettingsButton = document.createElement("button");
+      adminSettingsButton.id = "adminSettingsButton"; // Set an id for styling
+      adminSettingsButton.textContent = "Admin Settings";
+
+      // Append the button near the <h2> element
+      h2e.appendChild(adminSettingsButton);
+
+      // Add the click event listener to make the axios POST request
+      adminSettingsButton.addEventListener("click", () => {
+        console.log(groupid, "group id")
+        axios
+          .post("http://localhost:3000/admin-settings", { groupid: groupid }, { headers: { token: localStorage.getItem("user jwt") } })
+          .then(response => {
+            if (response.data.message === 'You are not an admin') {
+              alert(response.data.message); // Notify the user
+            } else {
+              // Navigate to the new page
+              window.location.href = `/groupsetting.html?groupid=${response.data.groupid}`;;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+
+
+      });
+
+
+
+
+
+
+
+
+
       axios.get(`http://localhost:3000/messages/${lastid}`, {
         headers: {
           token: localStorage.getItem("user jwt"),
@@ -148,20 +185,15 @@ document.addEventListener("DOMContentLoaded", () => {
               .post("http://localhost:3000/joinstatus", { groupId: group.id }, { headers: { token: localStorage.getItem("user jwt") } })
               .then((response) => {
                 groupid = group.id
+                groupname = group.name;
+                console.log(groupname, "4455")
                 console.log(response)
                 console.log("setted group id as", group.id)
                 if (response.data.groupdetails) {
                   console.log("was true")
                   ismemberofgroup = true
                 }
-
-
                 fetchData()
-
-
-
-
-
 
               })
               .catch((error) => {
@@ -169,21 +201,14 @@ document.addEventListener("DOMContentLoaded", () => {
               });
           });
 
-
-
-
           publicgroups.appendChild(groupli);
         });
-
-
-
 
       }
       )
   }
   fetchgroups()
   // setInterval(() => fetchData(), 2000);
-
 
 
   const defaultFormSubmit = (event) => {
@@ -203,16 +228,9 @@ document.addEventListener("DOMContentLoaded", () => {
         alert('Failed to create product');
       });
 
-
   };
 
   // Set the default form submit handler
   msgform.addEventListener("submit", defaultFormSubmit);
-
-
-
-
-
-
 
 })

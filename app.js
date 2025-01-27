@@ -15,7 +15,7 @@ const Messages = require('./models/messages');
 const Groups = require('./models/groups');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(adminRoutes);
-
+const UserGroup = require('./models/usergroup')
 
 
 Messages.belongsTo(Chatuser, { foreignKey: 'chatuserId' })
@@ -25,7 +25,9 @@ Chatuser.hasMany(Messages, { foreignKey: 'chatuserId' })
 Chatuser.belongsToMany(Groups, { through: 'UserGroups' });
 Groups.belongsToMany(Chatuser, { through: 'UserGroups' });
 
+UserGroup.belongsTo(Chatuser, { foreignKey: 'chatuserId' });
 
+Chatuser.hasMany(UserGroup, { foreignKey: 'chatuserId' });
 sequelize
   .sync()
   .then(() => {
