@@ -152,7 +152,7 @@
     <div class="message">You: hi There</div>
   </div>
   <div class="input-container">
-    <form id="messageForm" onsubmit="handleFormSubmit(event)">
+    <form id="messageForm" >
       <label for="usermessage">Message:</label>
       <input type="text" name="description" id="usermessage" placeholder="Type a message..." />
       <button type="submit">Send</button>
@@ -161,6 +161,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>
   <script src="chatwindow.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </body>
 
 </html>

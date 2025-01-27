@@ -1,236 +1,142 @@
 document.addEventListener("DOMContentLoaded", () => {
   const inputContainer = document.querySelector('.input-container');
+  const h2e = document.getElementById("currentgroupname");
+  const msgform = document.getElementById("messageForm");
+  const chatcontainer = document.getElementById("chats");
+  const publicgroups = document.getElementById("publicgroups");
 
-  let h2e = document.getElementById("currentgroupname")
-  console.log(h2e, "hehe")
-  if (inputContainer) {
-    inputContainer.style.display = 'none'; // Hide the element
-  }
   let groupname;
-  // fetchData()
-  let msgform = document.getElementById("messageForm");
-  let chatcontainer = document.getElementById("chats");
-  let ismemberofgroup = false
-  // console.log("chats arr ", chatsarr);
-  let groupid = false
-  // console.log(lastid)
+  let ismemberofgroup = false;
+  let groupid = false;
   let lastid = 0;
-  console.log(lastid)
 
+  // Connect to Socket.IO server
+  const socket = io('http://localhost:3000');
 
+  // Log connection status
+  socket.on('connect', () => console.log('Connected to Socket.io server'));
+  socket.on('connect_error', (err) => console.error('Socket.io connection error:', err));
+
+  // Join group when group is selected
+  const joinGroup = (groupId) => {
+    console.log(`Joining group with ID: ${groupId}`);
+    socket.emit('joinGroup', groupId);
+  };
+
+  // Fetch initial messages and set up real-time updates
   const fetchData = () => {
-
-    console.log("         d      ", groupid)
     if (ismemberofgroup) {
-      if (inputContainer.style.display = 'none') {
-        inputContainer.style.display = 'flex'; // Restore its display style
-
-      }
+      inputContainer.style.display = 'flex';
       h2e.textContent = groupname;
 
-
-
-      const adminSettingsButton = document.createElement("button");
-      adminSettingsButton.id = "adminSettingsButton"; // Set an id for styling
-      adminSettingsButton.textContent = "Admin Settings";
-
-      // Append the button near the <h2> element
-      h2e.appendChild(adminSettingsButton);
-
-      // Add the click event listener to make the axios POST request
-      adminSettingsButton.addEventListener("click", () => {
-        console.log(groupid, "group id")
-        axios
-          .post("http://localhost:3000/admin-settings", { groupid: groupid }, { headers: { token: localStorage.getItem("user jwt") } })
-          .then(response => {
-            if (response.data.message === 'You are not an admin') {
-              alert(response.data.message); // Notify the user
-            } else {
-              // Navigate to the new page
-              window.location.href = `/groupsetting.html?groupid=${response.data.groupid}`;;
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-          });
-
-
-      });
-
-
-
-
-
-
-
-
-
+      // Fetch initial messages
       axios.get(`http://localhost:3000/messages/${lastid}`, {
         headers: {
           token: localStorage.getItem("user jwt"),
           groupId: groupid
         }
-      })
-        .then((response) => {
+      }).then((response) => {
+        console.log("Messages fetched:", response.data);
 
-          let chats = localStorage.getItem('chats')
-          if (chats == null) {
-            localStorage.setItem('chats', '[]')
-            chats = localStorage.getItem('chats')
-          }
-          const chatsarr = JSON.parse(chats);
-          if (chatsarr.length != 0) {
-            lastid = chatsarr[chatsarr.length - 1].id
-          }
-          console.log(response.data.change)
-          if (response.data.change) {
-            const mergedArray = chatsarr.concat(response.data.messages);
-            // Convert merged array to a string
-            const resultString = JSON.stringify(mergedArray);
-            localStorage.setItem('chats', resultString)
-            response.data.messages.forEach((product) => {
-              let msgdiv = document.createElement('div');
-              msgdiv.className = 'message'; // Add a class for consistent styling
-              msgdiv.textContent = `${product.name}:  ${product.msg}`; // Use textContent for plain text to avoid potential XSS attacks
-              chatcontainer.appendChild(msgdiv); // Append the new message
-            });
-          }
-        });
-
-
-    }
-    else {
-      console.log("in without membership");
-      chatcontainer.innerHTML = "";
-      console.log(document.getElementById("joindiv"));
-
-      if (document.getElementById("joindiv")) {
-        document.getElementById("joindiv").remove();
-      }
-
-      // Create the div element
-      const groupDiv = document.createElement("div");
-      groupDiv.id = "joindiv";
-      groupDiv.setAttribute("data-group-id", `${groupid}`);
-      groupDiv.textContent = `Group ID: ${groupid}`;
-
-
-
-      // Create join button
-      const joinButton = document.createElement("button");
-      joinButton.textContent = "Join";
-
-      // Add click event with Axios POST request
-      joinButton.onclick = async () => {
-
-        const groupId = groupDiv.getAttribute("data-group-id");
-        axios.post("http://localhost:3000/joinbutton", {
-          groupId: groupId,
-        }, { headers: { token: localStorage.getItem("user jwt") } }).then((response) => {
-          inputContainer.style.display = 'flex'; // Restore its display style
-          console.log(response.data, " from join button")
+        let chats = localStorage.getItem('chats');
+        if (!chats) {
+          localStorage.setItem('chats', '[]');
+          chats = localStorage.getItem('chats');
         }
-        )
-      }
 
-      // Append button to div
-      groupDiv.appendChild(joinButton);
-      console.log("last append", groupDiv);
+        const chatsarr = JSON.parse(chats);
+        if (chatsarr.length > 0) {
+          lastid = chatsarr[chatsarr.length - 1].id;
+        }
 
-      // Append div to body
-      document.body.appendChild(groupDiv);
-    }
-  }
+        if (response.data.change) {
+          const mergedArray = chatsarr.concat(response.data.messages);
+          localStorage.setItem('chats', JSON.stringify(mergedArray));
 
-
-
-  let newgroup1 = document.getElementById("newgroupform1");
-  console.log(newgroup1)
-
-  const newgroupform = (event) => {
-    event.preventDefault();
-    console.log(" ok ")
-    console.log(event.target.groupname.value)
-
-
-    axios
-      .post("http://localhost:3000/creategroup", { groupname: event.target.groupname.value }, { headers: { token: localStorage.getItem("user jwt") } })
-      .then((response) => {
-        console.log('message recorded successfully!');
-      })
-      .catch((error) => {
-        console.error('Error details:', error.response ? error.response.data : error.message);
-        alert('Failed to create product');
+          response.data.messages.forEach((product) => {
+            const msgdiv = document.createElement('div');
+            msgdiv.className = 'message';
+            msgdiv.textContent = `${product.name}: ${product.msg}`;
+            chatcontainer.appendChild(msgdiv);
+          });
+        }
+      }).catch((err) => {
+        console.error("Error fetching messages:", err);
       });
 
+      // Listen for new messages
+      socket.on('receiveMessage', (message) => {
+        console.log("New message received:", message);
+        const msgdiv = document.createElement('div');
+        msgdiv.className = 'message';
+        msgdiv.textContent = `${message.name}: ${message.msg}`;
+        chatcontainer.appendChild(msgdiv);
+      });
+    } else {
+      console.warn("User is not a member of the group.");
+    }
+  };
 
-  }
-  newgroup1.addEventListener("submit", newgroupform)
+  // Handle form submission
+  msgform.addEventListener("submit", (event) => {
+    event.preventDefault();
 
-  let publicgroups = document.getElementById("publicgroups")
-  console.log("hi  ,", publicgroups)
+    const msg = event.target.usermessage.value;
+    const userId = localStorage.getItem("userId") || "unknown_user";
+    const userName = localStorage.getItem("userName") || "Anonymous";
+
+    if (!msg.trim()) {
+      console.warn("Cannot send an empty message.");
+      return;
+    }
+
+    console.log("Sending message:", { msg, groupId: groupid, userId, userName });
+
+    // Emit the message to the server
+    socket.emit('sendMessage', {
+      msg,
+      groupId: groupid,
+      userId,
+      userName
+    });
+
+    // Clear the input field
+    event.target.usermessage.value = '';
+  });
+
+  // Fetch groups and set up group selection
   const fetchgroups = () => {
     axios.get('http://localhost:3000/fetchgroups')
       .then((response) => {
-        response.data.groups.forEach(group => {
-          let groupli = document.createElement("li");
-          groupname = group.name
-          console.log(group.name)
-          groupli.textContent = group.name; // Use textContent for plain text
+        console.log("Groups fetched:", response.data.groups);
 
+        response.data.groups.forEach(group => {
+          const groupli = document.createElement("li");
+          groupli.textContent = group.name;
 
           groupli.addEventListener("click", () => {
-            groupid = false
-            axios
-              .post("http://localhost:3000/joinstatus", { groupId: group.id }, { headers: { token: localStorage.getItem("user jwt") } })
-              .then((response) => {
-                groupid = group.id
-                groupname = group.name;
-                console.log(groupname, "4455")
-                console.log(response)
-                console.log("setted group id as", group.id)
-                if (response.data.groupdetails) {
-                  console.log("was true")
-                  ismemberofgroup = true
-                }
-                fetchData()
+            groupid = group.id;
+            groupname = group.name;
 
-              })
-              .catch((error) => {
-                console.error("Error joining group:", error);
-              });
+            axios.post("http://localhost:3000/joinstatus", { groupId: group.id }, {
+              headers: { token: localStorage.getItem("user jwt") }
+            }).then((response) => {
+              console.log("Group join status:", response.data);
+
+              ismemberofgroup = response.data.groupdetails;
+              joinGroup(group.id);
+              fetchData();
+            }).catch((error) => {
+              console.error("Error joining group:", error);
+            });
           });
 
           publicgroups.appendChild(groupli);
         });
-
-      }
-      )
-  }
-  fetchgroups()
-  // setInterval(() => fetchData(), 2000);
-
-
-  const defaultFormSubmit = (event) => {
-    event.preventDefault();
-
-    const msg = event.target.usermessage.value;
-    console.log(msg)
-
-    axios
-      .post("http://localhost:3000/messagesubmit", { msg: msg, groupId: groupid }, { headers: { token: localStorage.getItem("user jwt") } })
-      .then((response) => {
-        console.log('message recorded successfully!');
-
-      })
-      .catch((error) => {
-        console.error('Error details:', error.response ? error.response.data : error.message);
-        alert('Failed to create product');
+      }).catch((err) => {
+        console.error("Error fetching groups:", err);
       });
-
   };
 
-  // Set the default form submit handler
-  msgform.addEventListener("submit", defaultFormSubmit);
-
-})
+  fetchgroups();
+});
