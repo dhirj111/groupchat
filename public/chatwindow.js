@@ -93,7 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
       imgContainer.className = 'image-container';
 
       const img = document.createElement('img');
-      img.src = message.imageUrl;
+
+      const transformedUrl = message.imageUrl.replace("/upload/", "/upload/c_thumb,g_faces,h_150,w_150/r_max/co_rgb:F8F3F0,e_outline:10/b_rgb:DBE0EA/");
+      img.src = transformedUrl;
       img.className = 'chat-image';
       img.alt = 'Uploaded content';
 
