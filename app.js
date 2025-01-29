@@ -47,22 +47,20 @@ io.on('connection', (socket) => {
 
   // Handle new messages
   socket.on('sendMessage', async (data) => {
-    const { msg, groupId, userId, userName } = data;
-
+    const { msg, groupId, userId, name } = data;
+    
     try {
-      // Save the message to the database
-      const message = await Messages.create({
+      // Just emit the message to the group - no need to create it again
+      io.to(groupId).emit('receiveMessage', {
         msg: msg,
-        name: userName,
+        name: name,
         chatuserId: userId,
-        groupId: groupId,
+        groupId: groupId
       });
-
-      // Emit the message to all users in the group
-      io.to(groupId).emit('receiveMessage', message);
-      console.log(`Message sent to group ${groupId}:`, message);
+      
+      console.log(`Message forwarded to group ${groupId}`);
     } catch (error) {
-      console.error('Error saving or sending message:', error);
+      console.error('Error forwarding message:', error);
     }
   });
 

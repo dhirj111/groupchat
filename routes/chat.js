@@ -37,4 +37,9 @@ router.post('/make-group-admin', auth, chatcontroller.makeMemberAdmin);
 
 router.post('/add-group-member', auth, chatcontroller.addGroupMember);
 
+router.get('/get-user-info', auth, chatcontroller.getuserinfo);
+
+router.post('/send-message', auth, chatcontroller.sendMessage);
+
+
 module.exports = router

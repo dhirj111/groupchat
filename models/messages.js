@@ -16,8 +16,13 @@ const Messages = sequelize.define('messages', {
     type: Sequelize.STRING,  // Matches table definition
     allowNull: true  // Since `expense` is defined as NULL in table
   },
-  groupId: {
+
+  imageUrl: {  // New column for images
     type: Sequelize.STRING,
+    allowNull: true
+  },
+  groupId: {
+    type: Sequelize.INTEGER,
     allowNull: false
   }
 }

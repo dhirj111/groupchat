@@ -9,7 +9,7 @@ const authenticate = async (req, res, next) => {
     const token = req.header('token');
     console.log(token);
     const user = jwt.verify(token, process.env.TOKEN_SECRET);
-    console.log(user.userId, "this is inside auth")
+    console.log(user.userId, "this is inside auth and  full user" ,user )
     Chatuser.findByPk(user.userId).then(user => {
       console.log(JSON.stringify(user));
       req.user = user;

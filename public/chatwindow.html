@@ -152,11 +152,15 @@
     <div class="message">You: hi There</div>
   </div>
   <div class="input-container">
-    <form id="messageForm" >
-      <label for="usermessage">Message:</label>
-      <input type="text" name="description" id="usermessage" placeholder="Type a message..." />
+
+
+    <form id="messageForm">
+      <input type="text" name="usermessage" placeholder="Type your message">
+      <input type="file" id="imageUpload" accept="image/*">
       <button type="submit">Send</button>
     </form>
+
+
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>

@@ -53,55 +53,96 @@ document.addEventListener("DOMContentLoaded", () => {
           const mergedArray = chatsarr.concat(response.data.messages);
           localStorage.setItem('chats', JSON.stringify(mergedArray));
 
-          response.data.messages.forEach((product) => {
-            const msgdiv = document.createElement('div');
-            msgdiv.className = 'message';
-            msgdiv.textContent = `${product.name}: ${product.msg}`;
+          // Render messages in the chat container
+          response.data.messages.forEach((message) => {
+            const msgdiv = createMessageElement(message);
             chatcontainer.appendChild(msgdiv);
           });
         }
-      }).catch((err) => {
-        console.error("Error fetching messages:", err);
-      });
 
-      // Listen for new messages
-      socket.on('receiveMessage', (message) => {
-        console.log("New message received:", message);
-        const msgdiv = document.createElement('div');
-        msgdiv.className = 'message';
-        msgdiv.textContent = `${message.name}: ${message.msg}`;
-        chatcontainer.appendChild(msgdiv);
+        // Listen for new messages from the socket
+        socket.on('receiveMessage', (message) => {
+          console.log("New message received:", message);
+          const msgdiv = createMessageElement(message);
+          chatcontainer.appendChild(msgdiv);
+          chatcontainer.scrollTop = chatcontainer.scrollHeight;
+        });
+      }).catch((error) => {
+        console.error("Error fetching messages:", error);
       });
-    } else {
-      console.warn("User is not a member of the group.");
     }
   };
 
-  // Handle form submission
-  msgform.addEventListener("submit", (event) => {
-    event.preventDefault();
+  // Helper function to create message elements
+  function createMessageElement(message) {
+    const msgdiv = document.createElement('div');
+    msgdiv.className = 'message';
 
-    const msg = event.target.usermessage.value;
-    const userId = localStorage.getItem("userId") || "unknown_user";
-    const userName = localStorage.getItem("userName") || "Anonymous";
+    const metaSpan = document.createElement('span');
+    metaSpan.className = 'message-meta';
+    metaSpan.textContent = `${message.name}: `;
 
-    if (!msg.trim()) {
-      console.warn("Cannot send an empty message.");
-      return;
+    const textSpan = document.createElement('span');
+    textSpan.className = 'message-text';
+    textSpan.textContent = message.msg;
+
+    msgdiv.append(metaSpan, textSpan);
+
+    if (message.imageUrl) {
+      const imgContainer = document.createElement('div');
+      imgContainer.className = 'image-container';
+
+      const img = document.createElement('img');
+      img.src = message.imageUrl;
+      img.className = 'chat-image';
+      img.alt = 'Uploaded content';
+
+      imgContainer.appendChild(img);
+      msgdiv.appendChild(imgContainer);
     }
 
-    console.log("Sending message:", { msg, groupId: groupid, userId, userName });
+    return msgdiv;
+  }
 
-    // Emit the message to the server
-    socket.emit('sendMessage', {
-      msg,
-      groupId: groupid,
-      userId,
-      userName
-    });
+  // Handle form submission
+  msgform.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const msg = event.target.usermessage.value;
+    const imageFile = document.getElementById('imageUpload').files[0];
 
-    // Clear the input field
-    event.target.usermessage.value = '';
+    const formData = new FormData();
+    formData.append('message', msg);
+    formData.append('groupId', groupid);
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    try {
+      // Send the message to the backend via HTTP
+      const response = await axios.post('http://localhost:3000/send-message', formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          token: localStorage.getItem("user jwt")
+        }
+      });
+
+      const messageData = response.data.data;
+
+      // Emit socket event with message data
+      socket.emit('sendMessage', {
+        msg: messageData.msg,
+        groupId: messageData.groupId,
+        userId: messageData.chatuserId,
+        name: messageData.name
+      });
+
+      // Clear the input fields
+      event.target.usermessage.value = '';
+      document.getElementById('imageUpload').value = '';
+    } catch (error) {
+      console.error("Error sending message:", error);
+      alert("Failed to send message. Please try again.");
+    }
   });
 
   // Fetch groups and set up group selection

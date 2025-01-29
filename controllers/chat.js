@@ -2,12 +2,13 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../util/database');
 const { Op } = require("sequelize");
-
+const cloudinary = require('cloudinary').v2;
 const Chatuser = require('../models/chatuser');
 const Messages = require('../models/messages')
 const Groups = require('../models/groups')
 const router = require('../routes/chat');
 const UserGroup = require('../models/usergroup')
+const multer = require('multer')
 console.log("U s e r G r o u p  ", UserGroup)
 const { route } = require('../routes/chat');
 const path = require('path');
@@ -15,8 +16,22 @@ const bcrypt = require('bcrypt');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const { group } = require('console');
+const { response } = require('express');
 
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Multer for memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+}).single('image');
 function generateAccessToken(id, name) {
 
   return jwt.sign({ userId: id, name: name }, process.env.TOKEN_SECRET);
@@ -485,17 +500,17 @@ exports.addGroupMember = async (req, res) => {
 
     // Check if current user is admin of the group
     const currentUserGroupRole = await UserGroup.findOne({
-      where: { 
-        groupId: groupId, 
+      where: {
+        groupId: groupId,
         chatuserId: currentUserId,
         isadmin: true
       }
     });
 
     if (!currentUserGroupRole) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: 'Only admins can add members' 
+        message: 'Only admins can add members'
       });
     }
 
@@ -543,6 +558,102 @@ exports.addGroupMember = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error'
+    });
+  }
+};
+
+exports.getuserinfo = async (req, res) => {
+  try {
+    // req.user should be available from your auth middleware
+    const user = {
+      id: req.user.id,
+      name: req.user.name
+    };
+
+    res.json({ user });
+  } catch (error) {
+    console.error('Error getting user info:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+exports.sendMessage = async (req, res) => {
+  try {
+    // Use multer to handle file upload
+    upload(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({
+          success: false,
+          message: 'Error uploading file'
+        });
+      }
+
+      const { message, groupId } = req.body;
+      const userId = req.user.id;
+      const userName = req.user.name;
+      let imageUrl = null;
+
+      // Validate required fields
+      if (!userName || !groupId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields'
+        });
+      }
+
+      // Handle image upload if present
+      if (req.file) {
+        try {
+          const b64 = Buffer.from(req.file.buffer).toString('base64');
+          const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+          const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+            resource_type: 'auto',
+            folder: 'chat_images'
+          });
+          imageUrl = cloudinaryResponse.secure_url;
+        } catch (uploadError) {
+          console.error('Cloudinary upload error:', uploadError);
+          return res.status(500).json({
+            success: false,
+            message: 'Error uploading image to cloud'
+          });
+        }
+      }
+
+      try {
+        // Ensure groupId is an integer
+        const messageData = {
+          name: userName,
+          msg: message || null,
+          chatuserId: userId,
+          groupId: parseInt(groupId, 10), // Convert to integer
+          imageUrl: imageUrl
+        };
+
+        console.log('Creating message with data:', messageData);
+
+        const newMessage = await Messages.create(messageData);
+
+        return res.status(200).json({
+          success: true,
+          message: 'Message sent successfully',
+          data: newMessage.dataValues,
+          imageUrl: imageUrl
+        });
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Error saving message to database',
+          error: dbError.message
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error in sendMessage:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error sending message'
     });
   }
 };
